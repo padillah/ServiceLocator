@@ -10,25 +10,42 @@ namespace ServiceLocator
     /// </summary>
     public static class Locator
     {
-        private static Dictionary<Type, ServiceInfo> services = new Dictionary<Type, ServiceInfo>();
+        private static readonly Dictionary<String, ServiceInfo> Services = new Dictionary<String, ServiceInfo>();
 
         /// <summary>
         /// Registers a service.
         /// </summary>
         public static void Register<TInterface, TImplemention>() where TImplemention : TInterface
         {
-            Register<TInterface, TImplemention>(false);
+            PrivateRegister<TImplemention>(typeof(TInterface).Name);
         }
 
+        public static void Register<TInterface, TImplemention>(String argReference) where TImplemention : TInterface
+        {
+            PrivateRegister<TImplemention>(argReference);
+        }
 
         /// <summary>
         /// Registers a service as a singleton.
         /// </summary>
         public static void RegisterSingleton<TInterface, TImplemention>() where TImplemention : TInterface
         {
-            Register<TInterface, TImplemention>(true);
+            PrivateRegister<TImplemention>(typeof(TInterface).Name, true);
         }
 
+        public static void RegisterSingleton<TInterface, TImplemention>(TImplemention argImplementation)
+            where TImplemention : TInterface
+        {
+            ServiceInfo localInfo = new ServiceInfo(typeof(TInterface), true, argImplementation);
+            PrivateRegister<TImplemention>(typeof(TInterface).Name, true, localInfo);
+        }
+
+        public static void RegisterSingleton<TInterface, TImplemention>(string argReference, TImplemention argImplementation)
+            where TImplemention : TInterface
+        {
+            ServiceInfo localInfo = new ServiceInfo(typeof(TInterface), true, argImplementation);
+            PrivateRegister<TImplemention>(argReference, true, localInfo);
+        }
 
         /// <summary>
         /// Resolves a service.
@@ -37,7 +54,8 @@ namespace ServiceLocator
         {
             try
             {
-                return (TInterface) services[typeof (TInterface)].ServiceImplementation;
+                //return (TInterface)services[typeof(TInterface)].ServiceImplementation;
+                return (TInterface)Services[typeof(TInterface).Name].ServiceImplementation;
             }
             catch (KeyNotFoundException ex)
             {
@@ -45,41 +63,56 @@ namespace ServiceLocator
             }
         }
 
-        /**/
+        public static TInterface Resolve<TInterface>(String argReference)
+        {
+            try
+            {
+                //return (TInterface)services[typeof(TInterface)].ServiceImplementation;
+                return (TInterface)Services[argReference].ServiceImplementation;
+            }
+            catch (KeyNotFoundException ex)
+            {
+                throw new ApplicationException(argReference + " has not been added to the Locator Service.", ex);
+            }
+        }
 
         public static void Reset()
         {
-            services.Clear();
+            Services.Clear();
         }
 
-        public static void Register<TInterface, TImplemention>(TImplemention argImplementation) where TImplemention : TInterface
+        /***********************************************************************************************************************************************/
+
+        private static void PrivateRegister<TImplementation>(String argReference, bool argIsSingleton = false,
+            ServiceInfo argImplementation = null)
         {
-            ServiceInfo localInfo = new ServiceInfo(typeof(TImplemention), true, argImplementation);
-
-            services.Add(typeof(TInterface), localInfo);
+            if (!argIsSingleton)
+            {
+                Services.Add(argReference, new ServiceInfo(typeof(TImplementation), false));
+            }
+            else
+            {
+                if (argImplementation == null)
+                {
+                    Services.Add(argReference, new ServiceInfo(typeof(TImplementation), true));
+                }
+                else
+                {
+                    Services.Add(argReference, argImplementation);
+                }
+            }
         }
 
-        /**/
-
-        /// <summary>
-        /// Registers a service.
-        /// </summary>
-        /// <param name="argIsSingleton">true if service is Singleton; otherwise false.</param>
-        private static void Register<TInterface, TImplemention>(bool argIsSingleton) where TImplemention : TInterface
-        {
-            services.Add(typeof(TInterface), new ServiceInfo(typeof(TImplemention), argIsSingleton));
-        }
-
+        /***********************************************************************************************************************************************/
 
         /// <summary>
         /// Class holding service information.
         /// </summary>
-        class ServiceInfo
+        private class ServiceInfo
         {
-            private Type _serviceImplementationType;
+            private readonly bool _isSingleton;
+            private readonly Type _serviceImplementationType;
             private object _serviceImplementation;
-            private bool isSingleton;
-
 
             /// <summary>
             /// Initializes a new instance of the <see cref="ServiceInfo"/> class.
@@ -89,7 +122,7 @@ namespace ServiceLocator
             public ServiceInfo(Type argServiceImplementationType, bool argIsSingleton)
             {
                 _serviceImplementationType = argServiceImplementationType;
-                isSingleton = argIsSingleton;
+                _isSingleton = argIsSingleton;
             }
 
             public ServiceInfo(Type argServiceImplementationType, bool argIsSingleton, object argConcreteClass)
@@ -105,7 +138,7 @@ namespace ServiceLocator
             {
                 get
                 {
-                    if (isSingleton)
+                    if (_isSingleton)
                     {
                         if (_serviceImplementation == null)
                         {
@@ -119,16 +152,19 @@ namespace ServiceLocator
                 }
             }
 
-
             /// <summary>
             /// Creates an instance of a specific type.
             /// </summary>
             /// <param name="argType">The type of the instance to create.</param>
             private static object CreateInstance(Type argType)
             {
-                if (services.ContainsKey(argType))
+                //if (services.ContainsKey(argType))
+                //{
+                //	return services[argType].ServiceImplementation;
+                //}
+                if (Services.ContainsKey(argType.Name))
                 {
-                    return services[argType].ServiceImplementation;
+                    return Services[argType.Name].ServiceImplementation;
                 }
 
                 ConstructorInfo ctor = argType.GetConstructors().First();
@@ -140,7 +176,5 @@ namespace ServiceLocator
                 return Activator.CreateInstance(argType, parameters.ToArray());
             }
         }
-    
     }
-
 }
