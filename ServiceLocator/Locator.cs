@@ -54,7 +54,6 @@ namespace ServiceLocator
         {
             try
             {
-                //return (TInterface)services[typeof(TInterface)].ServiceImplementation;
                 return (TInterface)Services[typeof(TInterface).Name].ServiceImplementation;
             }
             catch (KeyNotFoundException ex)
@@ -67,7 +66,6 @@ namespace ServiceLocator
         {
             try
             {
-                //return (TInterface)services[typeof(TInterface)].ServiceImplementation;
                 return (TInterface)Services[argReference].ServiceImplementation;
             }
             catch (KeyNotFoundException ex)
@@ -158,16 +156,24 @@ namespace ServiceLocator
             /// <param name="argType">The type of the instance to create.</param>
             private static object CreateInstance(Type argType)
             {
-                //if (services.ContainsKey(argType))
-                //{
-                //	return services[argType].ServiceImplementation;
-                //}
+                ConstructorInfo ctor;
+
                 if (Services.ContainsKey(argType.Name))
                 {
                     return Services[argType.Name].ServiceImplementation;
                 }
 
-                ConstructorInfo ctor = argType.GetConstructors().First();
+                var constructorList = argType.GetConstructors();
+                if (constructorList.Any())
+                {
+                    //If there are constructors, return the first.
+                    ctor = argType.GetConstructors().First();
+                }
+                else
+                {
+                    //If there are no constructors, return 'null' so that can be passed in to the next in line.
+                    return null;
+                }
 
                 var parameters =
                     from parameter in ctor.GetParameters()
