@@ -84,6 +84,12 @@ namespace ServiceLocator
         private static void PrivateRegister<TImplementation>(String argReference, bool argIsSingleton = false,
             ServiceInfo argImplementation = null)
         {
+            //If there is already an entry we don't need to add it again.
+            if (Services.ContainsKey(argReference))
+            {
+                return;
+            }
+
             if (!argIsSingleton)
             {
                 Services.Add(argReference, new ServiceInfo(typeof(TImplementation), false));
