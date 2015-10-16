@@ -158,16 +158,23 @@ namespace ServiceLocator
             /// <param name="argType">The type of the instance to create.</param>
             private static object CreateInstance(Type argType)
             {
-                //if (services.ContainsKey(argType))
-                //{
-                //	return services[argType].ServiceImplementation;
-                //}
+                ConstructorInfo ctor;
+
                 if (Services.ContainsKey(argType.Name))
                 {
                     return Services[argType.Name].ServiceImplementation;
                 }
 
-                ConstructorInfo ctor = argType.GetConstructors().First();
+                var ctorList = argType.GetConstructors();
+
+                if (ctorList.Any())
+                {
+                    ctor = ctorList.First();
+                }
+                else
+                {
+                    return null;
+                }
 
                 var parameters =
                     from parameter in ctor.GetParameters()
