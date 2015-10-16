@@ -54,7 +54,6 @@ namespace ServiceLocator
         {
             try
             {
-                //return (TInterface)services[typeof(TInterface)].ServiceImplementation;
                 return (TInterface)Services[typeof(TInterface).Name].ServiceImplementation;
             }
             catch (KeyNotFoundException ex)
@@ -67,7 +66,6 @@ namespace ServiceLocator
         {
             try
             {
-                //return (TInterface)services[typeof(TInterface)].ServiceImplementation;
                 return (TInterface)Services[argReference].ServiceImplementation;
             }
             catch (KeyNotFoundException ex)
@@ -86,6 +84,12 @@ namespace ServiceLocator
         private static void PrivateRegister<TImplementation>(String argReference, bool argIsSingleton = false,
             ServiceInfo argImplementation = null)
         {
+            //If there is already an entry we don't need to add it again.
+            if (Services.ContainsKey(argReference))
+            {
+                return;
+            }
+
             if (!argIsSingleton)
             {
                 Services.Add(argReference, new ServiceInfo(typeof(TImplementation), false));
@@ -165,14 +169,15 @@ namespace ServiceLocator
                     return Services[argType.Name].ServiceImplementation;
                 }
 
-                var ctorList = argType.GetConstructors();
-
-                if (ctorList.Any())
+                var constructorList = argType.GetConstructors();
+                if (constructorList.Any())
                 {
-                    ctor = ctorList.First();
+                    //If there are constructors, return the first.
+                    ctor = argType.GetConstructors().First();
                 }
                 else
                 {
+                    //If there are no constructors, return 'null' so that can be passed in to the next in line.
                     return null;
                 }
 
