@@ -33,14 +33,14 @@ namespace ServiceLocator
             PrivateRegister<TImplemention>(typeof(TInterface).Name, true);
         }
 
-        public static void RegisterSingleton<TInterface, TImplemention>(TImplemention argImplementation)
+        public static void RegisterSingleton<TInterface, TImplemention>(TInterface argImplementation)
             where TImplemention : TInterface
         {
             ServiceInfo localInfo = new ServiceInfo(typeof(TInterface), true, argImplementation);
             PrivateRegister<TImplemention>(typeof(TInterface).Name, true, localInfo);
         }
 
-        public static void RegisterSingleton<TInterface, TImplemention>(string argReference, TImplemention argImplementation)
+        public static void RegisterSingleton<TInterface, TImplemention>(string argReference, TInterface argImplementation)
             where TImplemention : TInterface
         {
             ServiceInfo localInfo = new ServiceInfo(typeof(TInterface), true, argImplementation);
